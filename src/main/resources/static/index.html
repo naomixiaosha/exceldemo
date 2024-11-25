@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>首页</title>
+    <link rel="stylesheet" href="../layui/css/layui.css">
+</head>
+<style>
+    .layui-tab-title {
+        border: none;
+    }
+
+    .layui-tab-title li {
+        background-color: #eeeeee;
+        margin-left: 10px;
+    }
+
+    .layui-tab-title .layui-this {
+        background-color: #009688;
+        color: white;
+    }
+
+    .layui-tab-title .layui-this:after {
+        content: none;
+    }
+</style>
+<body class="layui-layout-body">
+<div class="layui-layout layui-layout-admin">
+    <div class="layui-header">
+        <div class="layui-logo">订单追踪管理平台</div>
+        <!-- 头部区域（可配合layui已有的水平导航） -->
+
+    </div>
+
+    <div class="layui-side layui-bg-black">
+        <div class="layui-side-scroll">
+            <!-- 左侧导航区域（可配合layui已有的垂直导航） -->
+            <ul class="layui-nav layui-nav-tree" lay-filter="navLeft">
+                <li class="layui-nav-item layui-nav-itemed">
+                    <a>常用功能</a>
+                    <dl class="layui-nav-child">
+                        <dd><a data-id="a" href="/static/excelupload.html"
+                               target="content_iFrm">Excel上传</a></dd>
+                        <dd><a data-id="b" href="/static/dingdan.html"
+                               target="content_iFrm">订单追踪</a></dd>
+                        <dd><a data-id="b" href="/static/zhouyeji.html" target="content_iFrm">周业绩</a>
+                        </dd>
+                        <dd><a data-id="b" href="/static/pingzhongandzhonglei.html" target="content_iFrm">品种与中类管理页面</a>
+                        </dd>
+                        <dd><a data-id="b" href="/static/daleiandzhonglei.html" target="content_iFrm">大类与中类管理页面</a>
+                        </dd>
+                    </dl>
+                </li>
+
+            </ul>
+        </div>
+    </div>
+
+    <div class="layui-body" style="height: 100%">
+
+        <!-- 内容主体区域   默认首页-->
+        <iframe name="content_iFrm" frameborder=”no” border=”0″ class="larry-iframe"
+                style="width: 100%;height: 100%;" src="/static/excelupload.html"></iframe>
+    </div>
+
+    <div class="layui-footer">
+        <!-- 底部固定区域 -->
+        <div class="layui-anim layui-anim-fadein">© layui.com - 底部固定区域</div>
+
+        <i class="layui-icon layui-icon-username" style="font-size: 30px; color: #1E9FFF;"></i>
+    </div>
+</div>
+<!--<script src="/static/layui/layui.js"></script>-->
+<script>
+    //JavaScript代码区域
+    /*layui.use(['element','layer'], function(){
+        var element = layui.element;
+
+    });*/
+
+
+</script>
+
+
+</body>
+</html>

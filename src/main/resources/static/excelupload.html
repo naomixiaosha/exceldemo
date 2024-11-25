@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>Excel文件的导入导出</title>
+    <link rel="stylesheet" href="../layui/css/layui.css">
+</head>
+<body>
+
+<fieldset class="layui-elem-field layui-field-title" style="margin-top: 30px;">
+    <legend style="text-align: center">Excel文件的导入导出</legend>
+</fieldset>
+
+&emsp;<button type="button" class="layui-btn" id="test3"><i class="layui-icon"></i>导入Excel</button>&emsp;
+<button type="button" class="layui-btn" id="test4"><i class="layui-icon">&#xe601;</i>导出符合erp格式</button>
+<!--<button type="button" class="layui-btn" id="test5"><i class="layui-icon"></i>layui导出选中行的数据</button>-->
+<button type="button" class="layui-btn" id="test5"><i class="layui-icon">&#xe601;</i>导出符合追踪表格式</button>
+<!-- 你的HTML代码 -->
+<table class="layui-hide" id="test"></table>
+
+
+<script src="../layui/layui.js"></script>
+<script>
+    //一般直接写在一个js文件中
+    layui.use(['table', 'layer','upload'], function(){
+        var table = layui.table
+            ,$ = layui.$
+            ,layer = layui.layer
+            ,upload = layui.upload;
+
+
+        //刷新页面获取数据的条数
+        var count = 100;
+        page();
+
+        function page() {
+            $.ajax({
+                url: '/api/test/getCount',
+                dataType: 'json',
+                type: 'get',
+                async: false,
+                success: function (data) {
+                    //console.log(data.count)
+                    count = data.count;
+                }
+            });
+        }
+
+        // layer.msg('Hello World');
+        //进入首页渲染页面
+        var ins1 = table.render({
+            唯一号码: '唯一号码',
+            elem: '#test'
+            ,url:'/api/test/getList'
+            ,cols: [[
+                {type:'checkbox'}
+                , {field: 'number', title: '序号', sort: true, width: 100, type: 'numbers', unresize: false}
+                ,{field:'材料编号',title: '材料编号'}
+                ,{field:'编码',title: '材料名称'}
+                ,{field:'订单号',title: '订单号'}
+                ,{field:'图片',title: '图片'}
+                ,{field:'数量',title: '采购数量'}
+                ,{field:'单位', title: '单位'}
+                ,{field:'单价', title: '单价'} //minWidth：局部定义当前单元格的最小宽度，layui 2.2.1 新增
+                ,{field:'金额', title: '金额'}
+                ,{field:'成份', title: '成份'}
+                ,{field:'备注', title: '备注'}
+                ,{field:'日期',title: '下单日期'}
+            ]]
+            , page: true
+            , limit: 15
+            , prev: '上一页'
+            , next: '下一页'
+            //  , limits: [10, 20, 30]
+            , response: {
+                statusName: 'status' //规定数据状态的字段名称，默认：code
+                , dataName: 'rows' //规定数据列表的字段名称，默认：data
+            }
+            , parseData: function (item) { //将原始数据解析成 table 组件所规定的数据
+                return {
+                    "status": 0,   //解析接口状态
+                    "message": "成功",  //解析提示文本
+                    "count": count, //解析数据长度
+                    "rows": item.data  //解析数据列表
+                };
+            }
+        });
+
+        //指定允许上传的文件类型,上传文件
+        upload.render({
+            elem: '#test3'
+            ,url: '/api/test/readExcel'
+            ,accept: 'file' //普通文件
+            , choose: function (obj) {//选择文件后的回调函数。返回一个object参数，详见下文：https://www.layui.com/doc/modules/upload.html
+                showLoad();//启动动画
+            }
+            ,done: function(res){
+
+                if (res === 1) {
+                    closeLoad(showLoad());//成功后关闭动画
+                    layer.msg('上传成功');
+                    setTimeout('window.location.reload()', 1000);
+                } else {
+                    layer.msg('上传失败！', {time: 5000});//延迟5秒后自动关闭
+                    console.log('上传失败：'+res);
+                }
+            }
+        });
+        //动画
+        function showLoad() {//显示加载动画，icon: 16,转圈图标
+            return layer.msg('文件上传中，请稍等...', { icon: 16, shade: [0.5, '#f5f5f5'], scrollbar: false, offset: 'auto', time: 1000000 });
+        }
+        //关闭动画
+        function closeLoad(index) {
+            layer.close(index);
+        }
+
+        //导出符合erp数据
+        $("#test4").click(function () {//导出符合erp数据：订单号_202411131530.xlsx
+            // 文件名称可以根据自己需要进行设置
+            window.open('/api/test/exportExcel?fileName=订单表')
+        })
+
+        //导出追踪数据
+        $("#test5").click(function () {//导出符合追踪数据：追踪表_订单号_202411131530.xlsx
+            // var like = $("#demoReload").val();
+            //layer.msg('打印下载like:' + like);
+
+           // window.open('/api/dingdan/exportExcel?fileName=订单追踪表')
+           $.ajax({
+                url: '/api/dingdan/check',
+                type: 'get',
+                success: function (data) {
+                    //console.log("打印下载追踪格式Excel校验回调:"+data);
+                    if(data === '校验通过'){
+                        console.log("导出符合追踪表格式校验成功！");
+                        window.open('/api/dingdan/exportExcel?fileName=订单追踪表')
+                    }
+                    else{
+                        console.log("导出符合追踪表格式Excel失败！"+data);
+                        layer.msg("导出符合追踪表格式Excel失败！导出符合追踪表格式时生成了多条数据！", {time: 15000});//延迟15秒后自动关闭
+                    }
+                    // 校验通过后，才进行下载window.open('/api/dingdan/exportExcel?fileName=订单追踪表')
+                    //window.open('/api/dingdan/exportExcel?fileName=订单追踪表')
+                    // 文件名称可以根据自己需要进行设置
+                    }
+                })
+
+        })
+
+        //Excel通过layui导出，原始页面的勾选数据下载导出，废弃
+       /* $("#test5").click(function () {
+            // console.log("123")
+            var checkStatus = table.checkStatus('test'); //test 即为table绑定的id
+            //获取选中行的数据
+            var data = checkStatus.data;
+            if (data == null || data.length == 0) {
+                return layer.msg("请选择你需要导出的数据")
+            }
+
+            //将上述表格示例中的指定数据导出为 Excel 文件
+            table.exportFile(ins1.config.id, data); //data 为该实例中的任意数量的数据
+        })*/
+
+    });
+</script>
+</body>
+</html>

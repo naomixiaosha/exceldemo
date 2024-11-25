@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>品种与中类管理页面</title>
+    <link rel="stylesheet" href="../layui/css/layui.css">
+</head>
+<body>
+
+<fieldset class="layui-elem-field layui-field-title" style="margin-top: 30px;">
+    <legend style="text-align: center">品种与中类管理页面</legend>
+</fieldset>
+
+
+
+    <div class="demoTable">
+
+            <div class="layui-inline">
+               <input class="layui-input" name="id"placeholder="请输入品种" id="demoReload" autocomplete="off">
+            </div>
+            <button class="layui-btn" data-type="reload" id="sousuo"><i class="layui-icon">&#xe615;</i>搜索</button>
+        <!--<div class="layui-inline">
+            <input class="layui-input" type="date" id="dateselect_start"   value="2023-04-01" placeholder="请选择开始日期" autocomplete="off">
+        </div>
+        <div class="layui-inline">
+            <input class="layui-input" type="date"  id="dateselect_end"  value="2023-04-01" placeholder="请选择开始日期" autocomplete="off">
+        </div>
+        <button class="layui-btn" data-type="reload" id="dateselect"><i class="layui-icon">&#xe615;</i>生成周业绩</button>-->
+             <!--<button type="button" class="layui-btn" id="test3"><i class="layui-icon">&#xe62f;</i>导入Excel</button>-->
+           <!-- <button type="button" class="layui-btn" id="test4"><i class="layui-icon">&#xe601;</i>后台接口导出Excel</button>-->
+           <!-- <button type="button" class="layui-btn" id="test5"><i class="layui-icon">&#xe601;</i>layui导出选中行的数据</button>-->
+            <!--<button id="add_zhouyeji" type="button" class="layui-btn layui-btn-normal">新增</button>-->
+            <button id="add_pingzhong" type="button" class="layui-btn"><i class="layui-icon">&#xe61f;</i>新增</button>
+    </div>
+
+<!-- 你的HTML代码 -->
+<table class="layui-hide" id="test" lay-filter="testBar"></table>
+
+
+
+<script type="text/html" id="bar">
+    <button type="button" class="layui-btn layui-btn-xs" lay-event="update">编辑</button>
+    <button type="button" class="layui-btn layui-btn-danger layui-btn-xs" lay-event="delete">删除</button>
+</script>
+
+<script src="../layui/layui.js"></script>
+<script>
+    //一般直接写在一个js文件中
+    layui.use(['table', 'layer','upload'], function(){
+        var table = layui.table
+            ,$ = layui.$
+            ,layer = layui.layer
+            ,upload = layui.upload;
+
+
+
+        //刷新页面获取数据的条数
+        var count = 100;
+        page();
+        function page(){
+            $.ajax({
+                url: '/api/pingzhong/getCount',
+                dataType: 'json',
+                type: 'get',
+                async:false,
+                success: function(data){
+                    console.log("打印查询品种与中类表总数："+data.count)
+                    count = data.count;
+                }
+            });
+        }
+
+        // layer.msg('Hello World');
+        //进入首页渲染页面
+        var ins1 = table.render({
+            唯一号码: '唯一号码',
+            elem: '#test'
+            ,url:'/api/pingzhong/getList'
+            ,cols: [[
+                {type:'checkbox'}
+                ,{field:'number',  title: '序号', sort: true,width:100,type: 'numbers',unresize: false}
+                ,{field:'品种',title: '品种'}
+                ,{field:'中类',title: '中类'}
+                ,{field:'', title: '操作',toolbar:'#bar'}
+            ]]
+            ,page: true
+            ,limit: 15
+            ,prev: '上一页'
+            ,next: '下一页'
+           // ,limits: [10, 20, 30]
+            ,response:{
+                statusName: 'status' //规定数据状态的字段名称，默认：code
+                ,dataName: 'rows' //规定数据列表的字段名称，默认：data
+            }
+            ,parseData: function(item){ //将原始数据解析成 table 组件所规定的数据
+                return {
+                    "status": 0,   //解析接口状态
+                    "message":"成功",  //解析提示文本
+                    "count":count, //解析数据长度
+                    "rows": item.data  //解析数据列表
+                };
+            }
+        });
+
+        table.on('tool(testBar)',function (obj){
+
+            //点击事件
+            var layEvent = obj.event;
+            if(layEvent === 'delete'){
+                //删除事件，根据唯一号码，删除当前品种
+                console.log("删除事件")
+                var data = obj;
+                var weiyihaoma = data.data.唯一号码;
+                console.log("打印删除唯一号码："+weiyihaoma);
+
+                layer.confirm('确定删除该条数据吗？', function(index){
+                    $.ajax({
+                        type: 'post',
+                        url: '/api/pingzhong/Pingzhongdelete',//根据唯一号码，删除当前品种接口
+                        data:{'weiyihaoma':weiyihaoma},
+                        async:false,
+                        success: function(data){
+                            console.log("打印回调值："+data);
+                            if (data === 'ok') {
+                                layer.msg('删除成功');
+                                setTimeout('window.location.reload()',1000);
+                                // layer.close(index) // 关闭弹出层
+                            }else {
+                                layer.msg('删除失败，请重试');
+                            }
+                        }
+                    })
+                });
+               // layer.close(index);
+                    // 确认后的回调函数，执行Ajax请求
+
+
+               /* $.ajax({
+                    type: 'post',
+                    url: '/api/pingzhong/Pingzhongdelete',//根据唯一号码，删除当前品种接口
+                    data:{'weiyihaoma':weiyihaoma},
+                    async:false,
+                    success: function(data){
+                         console.log("打印回调值："+data);
+                        if (data === 'ok') {
+                            layer.msg('删除成功');
+                             setTimeout('window.location.reload()',1000);
+                           // layer.close(index) // 关闭弹出层
+                        }else {
+                            layer.msg('删除失败，请重试');
+                        }
+                    }
+                })*/
+            }
+            if(layEvent === 'update'){
+                //修改事件
+                console.log("更新事件")
+                var data = obj;
+
+                var weiyihaoma = data.data.唯一号码;
+                var pingzhong = data.data.品种;
+                var zhonglei = data.data.中类;
+
+                layer.open({
+                    type: 1,
+                    title: "编辑品种与中类界面",
+                    closeBtn: true,
+                    scrollbar: false,
+                    area: '350px',
+                    shadeClose: true, //点击遮罩关闭
+                    content: '<div>' +
+                        '<label class="layui-form-label"> 品种</label>\n' +
+                        '    <div class="layui-input-block">\n' +
+                        '        <input type="text" name="pingzhong" id="pingzhong" required  lay-verify="required" value="' + pingzhong + '" autocomplete="off" class="layui-input" style="width:200px">\n' +
+                        '    </div>\n' +
+                        '    <label class="layui-form-label"> 中类</label>\n' +
+                        '    <div class="layui-input-block">\n' +
+                        '        <input type="text" name="zhonglei" id="zhonglei" required  lay-verify="required" value="' + zhonglei + '" autocomplete="off" class="layui-input" style="width:200px">\n' +
+                        '    </div>\n' +
+                        '</div>',
+                    btn: ['确认', '取消', '仅修改中类'],//btn为数组按钮，默认['确定', '取消']，可以添加多个，新增调用仅修改中类为btn3
+                    btnAlign: 'c',
+                    yes: function(index, layero){ //修改方法
+                        var pingzhong = $("#pingzhong").val();
+                        var zhonglei = $("#zhonglei").val();
+                        //  console.log("测试打印表单内容:"+zhongleiname+zhonglei+danwei);
+                        $.ajax({
+                            type: 'post',
+                            url: '/api/pingzhong/editPingzhong',
+                            data:{
+                                'weiyihaoma':weiyihaoma
+                                ,'pingzhong':pingzhong
+                                ,'zhonglei':zhonglei
+                            },
+                            async:false,
+                            success: function(data){
+                                // console.log("打印回调值："+data);
+                                if (data == 'ok') {
+                                    layer.msg('修改成功');
+                                      setTimeout('window.location.reload()',1000);
+                                   // layer.close(index) // 关闭弹出层
+                                }else {
+                                    // console.log("进入else："+data);
+                                    layer.msg('修改失败，'+data);
+                                }
+                            }
+                        })
+
+                    }
+                    ,btn3: function(index, layero){//仅修改中类方法
+                        console.log("仅修改中类事件")
+                        var zhonglei = $("#zhonglei").val();
+                        $.ajax({
+                            type: 'post',
+                            url: '/api/pingzhong/editZhonglei',
+                            data:{
+                                'weiyihaoma':weiyihaoma
+                                ,'zhonglei':zhonglei
+                            },
+                            async:false,
+                            success: function(data){
+                                console.log("仅修改中类回调："+data);
+                                // console.log("打印回调值："+data);
+                                if (data === 'ok') {
+                                    layer.msg('修改成功');
+                                    setTimeout('window.location.reload()',1000);
+                                    // layer.close(index) // 关闭弹出层
+                                }else {
+                                    // console.log("进入else："+data);
+                                    layer.msg('修改失败，'+data);
+                                }
+                            }
+                        })
+                    }
+                });
+
+
+            }
+        });
+        //模糊查询搜索按钮的点击事件-----------------查询品种名称-------------------------------------
+        $("#sousuo").click(function () {
+           var like = $("#demoReload").val();
+            //这里以搜索为例
+          //  layer.msg('开始搜索,打印搜索关键词:'+like);
+            table.reload('test',{
+                url: '/api/pingzhong/getLikeList'
+                ,where: { //设定异步数据接口的额外参数，任意设
+                    'like': like//传送搜索条件，取文本框的值
+                }
+                ,page: {
+                    curr: 1 //重新从第 1 页开始
+                }
+            });
+            $.ajax({
+                url: '/api/pingzhong/getLikeCount',
+                dataType: 'json',
+                type: 'get',
+                data:{'like':like},
+                async:false,
+                success: function(data){
+                    console.log(data.count)
+                    count = data.count;
+                }
+            });
+            layer.msg('搜索完成');
+        });
+
+
+          $('#add_pingzhong').on("click",function(){
+              layer.open({
+                  type: 1,
+                  title: "新增品种",
+                  closeBtn: true,
+                  scrollbar: false,
+                  area: '350px',
+                  shadeClose: true, //点击遮罩关闭
+                  content: '<div>' +
+                      '    <label class="layui-form-label"> 品种</label>\n' +
+                      '    <div class="layui-input-block">\n' +
+                      '        <input type="text" name="pingzhong" id="pingzhong" required  lay-verify="required" placeholder="请输入品种" autocomplete="off" class="layui-input" style="width:200px">\n' +
+                      '    </div>\n' +
+                      '    <label class="layui-form-label"> 中类</label>\n' +
+                      '    <div class="layui-input-block">\n' +
+                      '        <input type="text" name="zhonglei" id="zhonglei" required  lay-verify="required" placeholder="请输入中类" autocomplete="off" class="layui-input" style="width:200px">\n' +
+                      '    </div>\n' +
+                      '</div>',
+                  btn: ['确认', '取消'],
+                  btnAlign: 'c',
+                  yes: function(index, layero){
+
+                      var pingzhong = $("#pingzhong").val();
+                      var zhonglei = $("#zhonglei").val();
+
+                      if (pingzhong == null || pingzhong == ""){
+                          layer.msg("品种不能为空");
+                          return;
+                      }
+                      if (zhonglei == null || zhonglei == ""){
+                          layer.msg("中类不能为空");
+                          return;
+                      }
+
+                      $.ajax({
+                          type: 'post',
+                          url: '/api/pingzhong/addPingzhong',//品种与中类表插入数据
+                          data:{'pingzhong':pingzhong,'zhonglei':zhonglei},
+                          async:false,
+                          success: function(data){
+                              console.log("打印回调值："+data);
+                             if (data == '添加成功') {
+                                // console.log("进入if："+data);
+                                  layer.msg('添加成功');
+                                  setTimeout('window.location.reload()',1000);
+                                  layer.close(index) // 关闭弹出层
+                              }else {
+                                // console.log("进入else："+data);
+                                 layer.msg('添加失败，'+data);
+                             }
+
+                          }
+                      })
+
+                  }
+              });
+            });
+
+
+
+        });
+</script>
+</body>
+</html>

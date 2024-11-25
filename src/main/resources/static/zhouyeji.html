@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>Excel文件的导入导出测试</title>
+    <link rel="stylesheet" href="../layui/css/layui.css">
+</head>
+<body>
+
+<fieldset class="layui-elem-field layui-field-title" style="margin-top: 30px;">
+    <legend style="text-align: center">周业绩页面</legend>
+</fieldset>
+
+
+
+<div class="demoTable">
+
+    <div class="layui-inline">
+        <input class="layui-input" name="id"placeholder="请输入中类中文" id="demoReload" autocomplete="off">
+    </div>
+    <button class="layui-btn" data-type="reload" id="sousuo"><i class="layui-icon">&#xe615;</i>搜索</button>
+    <!--<div class="layui-inline">
+        <input class="layui-input" type="date" id="dateselect_start"   value="2023-04-01" placeholder="请选择开始日期" autocomplete="off">
+    </div>
+    <div class="layui-inline">
+        <input class="layui-input" type="date"  id="dateselect_end"  value="2023-04-01" placeholder="请选择开始日期" autocomplete="off">
+    </div>
+    <button class="layui-btn" data-type="reload" id="dateselect"><i class="layui-icon">&#xe615;</i>生成周业绩</button>-->
+    <!--<button type="button" class="layui-btn" id="test3"><i class="layui-icon">&#xe62f;</i>导入Excel</button>-->
+    <button type="button" class="layui-btn" id="test4"><i class="layui-icon">&#xe601;</i>导出周业绩Excel</button>
+    <!-- <button type="button" class="layui-btn" id="test5"><i class="layui-icon">&#xe601;</i>layui导出选中行的数据</button>-->
+    <!--<button id="add_zhouyeji" type="button" class="layui-btn layui-btn-normal">新增</button>-->
+    <button id="add_zhouyeji" type="button" class="layui-btn"><i class="layui-icon">&#xe61f;</i>新增</button>
+</div>
+
+<!-- 你的HTML代码 -->
+<table class="layui-hide" id="test" lay-filter="testBar"></table>
+
+
+
+<script type="text/html" id="bar">
+    <button type="button" class="layui-btn layui-btn-xs" lay-event="update">编辑</button>
+    <button type="button" class="layui-btn layui-btn-danger layui-btn-xs" lay-event="delete">删除</button>
+</script>
+
+<div class="layui-row" id="popUpdateTest" style="display:none;">
+    <div class="layui-col-md10">
+        <form class="layui-form layui-from-pane" action="" style="margin-top:20px" >
+            <div class="layui-form-item">
+                <label class="layui-form-label">采集设备类型</label>
+                <div class="layui-input-block">
+                    <select name="eqptType" lay-filter="eqptType">
+                        <option value="0a0003biac">0a0003biac</option>
+                        <option value="0a0003ahup" selected="">0a0003ahup</option>
+                    </select>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">eqptIdCode</label>
+                <div class="layui-input-block">
+                    <input type="text" name="neweqptIdCode"  required  lay-verify="required" autocomplete="off" placeholder="请输入采集设备地址" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">eqptName</label>
+                <div class="layui-input-block">
+                    <input type="text" name="neweqptName"  required  lay-verify="required" autocomplete="off" placeholder="请输入采集设备名称" class="layui-input">
+                </div>
+            </div>
+
+            <div class="layui-form-item" style="margin-top:40px">
+                <div class="layui-input-block">
+                    <button class="layui-btn  layui-btn-submit " lay-submit="" lay-filter="demo11">确认修改</button>
+                    <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<script src="../layui/layui.js"></script>
+<script>
+    //一般直接写在一个js文件中
+    layui.use(['table', 'layer','upload'], function(){
+        var table = layui.table
+            ,$ = layui.$
+            ,layer = layui.layer
+            ,upload = layui.upload;
+
+
+
+        //刷新页面获取数据的条数
+        var count = 100;
+        page();
+        function page(){
+            $.ajax({
+                url: '/api/yeji/getCount',
+                dataType: 'json',
+                type: 'get',
+                async:false,
+                success: function(data){
+                    console.log("查询周业绩表总数："+data.count)
+                    count = data.count;
+                }
+            });
+        }
+
+        // layer.msg('Hello World');
+        //进入首页渲染页面
+        var ins1 = table.render({
+            唯一号码: '唯一号码',
+            elem: '#test'
+            ,url:'/api/yeji/getList'
+            ,cols: [[
+                {type:'checkbox'}
+                ,{field:'number',  title: '序号', sort: true,width:100,type: 'numbers',unresize: false}
+                ,{field:'中类中文',title: '中类中文'}
+                ,{field:'中类',title: '中类'}
+                ,{field:'单位',title: '单位'}
+                ,{field:'下单数量',title: '下单数量'}
+                ,{field:'下单金额', title: '下单金额'} //minWidth：局部定义当前单元格的最小宽度，layui 2.2.1 新增
+                ,{field:'发货数量',title: '发货数量'}
+                ,{field:'发货金额', title: '发货金额'}
+                ,{field:'', title: '操作',toolbar:'#bar'}
+            ]]
+            ,page: true
+            ,limit: 15
+            ,prev: '上一页'
+            ,next: '下一页'
+            // ,limits: [10, 20, 30]
+            ,response:{
+                statusName: 'status' //规定数据状态的字段名称，默认：code
+                ,dataName: 'rows' //规定数据列表的字段名称，默认：data
+            }
+            ,parseData: function(item){ //将原始数据解析成 table 组件所规定的数据
+                return {
+                    "status": 0,   //解析接口状态
+                    "message":"成功",  //解析提示文本
+                    "count":count, //解析数据长度
+                    "rows": item.data  //解析数据列表
+                };
+            }
+        });
+
+        table.on('tool(testBar)',function (obj){
+
+            //点击事件
+            var layEvent = obj.event;
+            if(layEvent === 'delete'){
+                //删除事件，根据中类中文清空业绩数据
+                console.log("删除事件")
+                var data = obj;
+                var weiyihaoma = data.data.唯一号码;
+
+                layer.confirm('确定删除该条数据吗？', function(index){
+                $.ajax({
+                    type: 'post',
+                    url: '/api/yeji/Yejidelete',
+                    data:{'weiyihaoma':weiyihaoma},
+                    async:false,
+                    success: function(data){
+                        console.log("打印回调值："+data);
+                        if (data == 'ok') {
+                            layer.msg('删除成功');
+                            setTimeout('window.location.reload()',1000);
+                            // layer.close(index) // 关闭弹出层
+                        }
+                    }
+                })
+                });
+
+            }
+            if(layEvent === 'update'){
+                //修改事件
+                console.log("更新事件")
+                var data = obj;
+                console.log('打印获取删除参数：'+data.data.中类中文)
+                var weiyihaoma = data.data.唯一号码;
+                var zhongleiname = data.data.中类中文;
+                var zhonglei = data.data.中类;
+                var danwei = data.data.单位;
+                var xiadanshuliang = data.data.下单数量;
+                var xiadanjinge = data.data.下单金额;
+                var fahuoshuliang = data.data.发货数量;
+                var fahuojinge = data.data.发货金额;
+
+                layer.open({
+                    type: 1,
+                    title: "编辑业绩界面",
+                    closeBtn: true,
+                    scrollbar: false,
+                    area: '350px',
+                    shadeClose: true, //点击遮罩关闭
+                    content: '<div>' +
+                        '<label class="layui-form-label"> 中类中文</label>\n' +
+                        '    <div class="layui-input-block">\n' +
+                        '        <input type="text" name="zhongleiname" id="zhongleiname" required  lay-verify="required" value="' + zhongleiname + '" autocomplete="off" class="layui-input" style="width:200px">\n' +
+                        '    </div>\n' +
+                        '    <label class="layui-form-label"> 中类</label>\n' +
+                        '    <div class="layui-input-block">\n' +
+                        '        <input type="text" name="zhonglei" id="zhonglei" required  lay-verify="required" value="' + zhonglei + '" autocomplete="off" class="layui-input" style="width:200px">\n' +
+                        '    </div>\n' +
+                        '    <label class="layui-form-label"> 单位</label>\n' +
+                        '    <div class="layui-input-block">\n' +
+                        '        <input type="text" name="danwei" id="danwei" required  lay-verify="required" value="' + danwei + '" autocomplete="off" class="layui-input" style="width:200px">\n' +
+                        '    </div>' +
+                        '<label class="layui-form-label"> 下单数量</label>\n' +
+                        '    <div class="layui-input-block">\n' +
+                        '        <input type="text" name="xiadanshuliang" id="xiadanshuliang" required  lay-verify="required" value="' + xiadanshuliang + '" autocomplete="off" class="layui-input" style="width:200px">\n' +
+                        '    </div>\n' +
+                        '    <label class="layui-form-label"> 下单金额</label>\n' +
+                        '    <div class="layui-input-block">\n' +
+                        '        <input type="text" name="xiadanjinge" id="xiadanjinge" required  lay-verify="required" value="' + xiadanjinge + '" autocomplete="off" class="layui-input" style="width:200px">\n' +
+                        '    </div>\n' +
+                        '    <label class="layui-form-label"> 发货数量</label>\n' +
+                        '    <div class="layui-input-block">\n' +
+                        '        <input type="text" name="fahuoshuliang" id="fahuoshuliang" required  lay-verify="required" value="' + fahuoshuliang + '" autocomplete="off" class="layui-input" style="width:200px">\n' +
+                        '    </div>' +
+                        '    <label class="layui-form-label"> 发货金额</label>\n' +
+                        '    <div class="layui-input-block">\n' +
+                        '        <input type="text" name="fahuojinge" id="fahuojinge" required  lay-verify="required" value="' + fahuojinge + '" autocomplete="off" class="layui-input" style="width:200px">\n' +
+                        '    </div>' +
+                        '</div>',
+                    btn: ['确认', '取消'],
+                    btnAlign: 'c',
+                    yes: function(index, layero){
+                        var zhongleiname = $("#zhongleiname").val();
+                        var zhonglei = $("#zhonglei").val();
+                        var danwei = $("#danwei").val();
+                        var xiadanshuliang = $("#xiadanshuliang").val();
+                        var xiadanjinge = $("#xiadanjinge").val();
+                        var fahuoshuliang = $("#fahuoshuliang").val();
+                        var fahuojinge = $("#fahuojinge").val();
+                        //  console.log("测试打印表单内容:"+zhongleiname+zhonglei+danwei);
+                        if(xiadanshuliang == null || xiadanshuliang == '' || xiadanshuliang == 'null' ){
+                            layer.msg('下单数量不能为空');
+                            return;
+                        }
+                        if(xiadanjinge == null || xiadanjinge == '' || xiadanjinge == 'null' ){
+                            layer.msg('下单金额不能为空');
+                            return;
+                        }
+                        if(fahuoshuliang == null || fahuoshuliang == '' || fahuoshuliang == 'null' ){
+                            layer.msg('发货数量不能为空');
+                            return;
+                        }
+                        if(fahuojinge == null || fahuojinge == '' || fahuojinge == 'null' ){
+                            layer.msg('发货金额不能为空');
+                        }
+                        $.ajax({
+                            type: 'post',
+                            url: '/api/yeji/editZhouyeji',
+                            data:{
+                                'weiyihaoma':weiyihaoma
+                                ,'zhongleiname':zhongleiname
+                                ,'zhonglei':zhonglei
+                                ,'danwei':danwei
+                                ,'xiadanshuliang':xiadanshuliang
+                                ,'xiadanjinge':xiadanjinge
+                                ,'fahuoshuliang':fahuoshuliang
+                                ,'fahuojinge':fahuojinge
+                            },
+                            async:false,
+                            success: function(data){
+                                // console.log("打印回调值："+data);
+                                if (data === 'ok') {
+                                    layer.msg('修改成功');
+                                    setTimeout('window.location.reload()',1000);
+                                    // layer.close(index) // 关闭弹出层
+                                }
+                            }
+                        })
+
+                    }
+                });
+
+
+            }
+        });
+        //模糊查询搜索按钮的点击事件------------------------------------------------------
+        $("#sousuo").click(function () {
+            var like = $("#demoReload").val();
+            //这里以搜索为例
+            //  layer.msg('开始搜索,打印搜索关键词:'+like);
+            table.reload('test',{
+                url: '/api/yeji/getLikeList'
+                ,where: { //设定异步数据接口的额外参数，任意设
+                    'like': like//传送搜索条件，取文本框的值
+                }
+                ,page: {
+                    curr: 1 //重新从第 1 页开始
+                }
+            });
+            $.ajax({
+                url: '/api/yeji/getLikeCount',
+                dataType: 'json',
+                type: 'get',
+                data:{'like':like},
+                async:false,
+                success: function(data){
+                    console.log(data.count)
+                    count = data.count;
+                }
+            });
+            layer.msg('搜索完成');
+        });
+
+        //新增按开始结束日期的点击事件，生成周业绩数据同步到业绩表中
+        /* $("#dateselect").click(function () {
+             var start = $("#dateselect_start").val();
+             var end = $("#dateselect_end").val();
+             //这里以搜索为例
+           //  layer.msg('开始搜索,打印开始日期:'+start+'结束日期:'+end);
+             $.ajax({
+                 url: 'http://localhost:8080/api/yeji/UpdateJiaoqiDate',
+                 dataType: 'json',
+                 type: 'get',
+                 data:{'start':start,'end':end},
+                 async:false,
+                 success: function(data){
+                     if (data.equals('更新成功')) {
+                         layer.msg('生成成功，请至周业绩界面查询');
+                     }
+                 }
+             });
+         });*/
+
+        //指定允许上传的文件类型,上传文件
+        /* upload.render({
+             elem: '#test3'
+             ,url: 'http://localhost:8080/api/yeji/readExcel' //改成您自己的上传接口
+             ,accept: 'file' //普通文件
+             ,done: function(res){
+                 if (res = 1){
+                     layer.msg('上传成功');
+                     setTimeout('window.location.reload()',1000);
+                 }else {
+                     layer.msg('上传失败');
+
+                 }
+                 // layer.load();
+             }
+         });*/
+
+        //Excel后台导出
+        $("#test4").click(function () {
+            var like = $("#demoReload").val();
+            //layer.msg('打印下载like:'+like);
+            console.log('打印下载like:'+like);
+            if (like!= null && like!= ""){//条件栏不为空，则导出带条件的数据
+                window.open('/api/yeji/exportExcel?fileName=周业绩表&like='+like)
+            }else {//条件栏为空，不传递携带参数,则导出全部数据
+                window.open('/api/yeji/exportExcel?fileName=周业绩表')
+
+            }
+            // 文件名称可以根据自己需要进行设置
+        })
+
+        //Excel通过layui导出
+        $("#test5").click(function () {
+            // console.log("123")
+            var checkStatus = table.checkStatus('test'); //test 即为table绑定的id
+            //获取选中行的数据
+            var data = checkStatus.data;
+            if (data == null || data.length == 0) {
+                return layer.msg("请选择你需要导出的数据")
+            }
+
+            //将上述表格示例中的指定数据导出为 Excel 文件
+            table.exportFile(ins1.config.id, data); //data 为该实例中的任意数量的数据
+        })
+
+        /*
+
+                var today = new Date();
+                var dd = String(today.getDate()).padStart(2, '0');
+                var mm = String(today.getMonth() + 1).padStart(2, '0'); // 1月是0!
+                var yyyy = today.getFullYear();
+                document.getElementById('dateselect_start').value = yyyy + '-' + mm + '-' + dd;
+                document.getElementById('dateselect_end').value = yyyy + '-' + mm + '-' + dd;
+        */
+
+        $('#add_zhouyeji').on("click",function(){
+            layer.open({
+                type: 1,
+                title: "新增中类界面",
+                closeBtn: true,
+                scrollbar: false,
+                area: '350px',
+                shadeClose: true, //点击遮罩关闭
+                content: '<div>' +
+                    '<label class="layui-form-label"> 中类中文</label>\n' +
+                    '    <div class="layui-input-block">\n' +
+                    '        <input type="text" name="zhongleiname" id="zhongleiname" required  lay-verify="required" placeholder="中类中文" autocomplete="off" class="layui-input" style="width:200px">\n' +
+                    '    </div>\n' +
+                    '    <label class="layui-form-label"> 中类</label>\n' +
+                    '    <div class="layui-input-block">\n' +
+                    '        <input type="text" name="zhonglei" id="zhonglei" required  lay-verify="required" placeholder="请输入中类" autocomplete="off" class="layui-input" style="width:200px">\n' +
+                    '    </div>' +
+                    '    <label class="layui-form-label"> 单位</label>\n' +
+                    '    <div class="layui-input-block">\n' +
+                    '        <input type="text" name="danwei" id="danwei" required  lay-verify="required" placeholder="请输入单位" autocomplete="off" class="layui-input" style="width:200px">\n' +
+                    '    </div>' +
+                    '</div>',
+                btn: ['确认', '取消'],
+                btnAlign: 'c',
+                yes: function(index, layero){
+                    var zhongleiname = $("#zhongleiname").val();
+                    var zhonglei = $("#zhonglei").val();
+                    var danwei = $("#danwei").val();
+                    //  console.log("测试打印表单内容:"+zhongleiname+zhonglei+danwei);
+                    if (zhongleiname == null || zhongleiname == ""){
+                        layer.msg("中类中文不能为空");
+                        return;
+                    }
+
+                    if (zhonglei == null || zhonglei == ""){
+                        layer.msg("中类不能为空");
+                        return;
+                    }
+
+                    if (danwei == null || danwei == ""){
+                        layer.msg("单位不能为空");
+                        return;
+                    }
+                    $.ajax({
+                        type: 'post',
+                        url: '/api/yeji/addZhouyeji',
+                        data:{'zhongleiname':zhongleiname,'zhonglei':zhonglei,'danwei':danwei},
+                        async:false,
+                        success: function(data){
+                            console.log("打印回调值："+data);
+                            if (data === '添加成功') {
+                                // console.log("进入if："+data);
+                                layer.msg('添加成功');
+                                //  setTimeout('window.location.reload()',1000);
+                                layer.close(index) // 关闭弹出层
+                            }else {
+                                // console.log("进入else："+data);
+                                layer.msg('添加失败!'+data, {time: 10000});// 10s后自动关闭
+                            }
+
+                        }
+                    })
+
+                }
+            });
+        });
+
+
+
+    });
+</script>
+</body>
+</html>
